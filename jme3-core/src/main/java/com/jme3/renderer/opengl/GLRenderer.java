@@ -38,8 +38,10 @@ import java.nio.ShortBuffer;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -47,6 +49,7 @@ import java.util.regex.Pattern;
 
 import com.jme3.material.RenderState;
 import com.jme3.material.RenderState.BlendFunc;
+import com.jme3.material.RenderState.FaceCullMode;
 import com.jme3.material.RenderState.StencilOperation;
 import com.jme3.material.RenderState.TestFunction;
 import com.jme3.math.ColorRGBA;
@@ -296,9 +299,7 @@ public final class GLRenderer implements Renderer {
 
         // == texture format extensions ==
 
-        boolean hasFloatTexture;
-
-        hasFloatTexture = hasExtension("GL_OES_texture_half_float") &&
+        boolean hasFloatTexture = hasExtension("GL_OES_texture_half_float") &&
                 hasExtension("GL_OES_texture_float");
 
         if (!hasFloatTexture) {
@@ -712,23 +713,18 @@ public final class GLRenderer implements Renderer {
                 gl.glEnable(GL.GL_CULL_FACE);
             }
 
-            switch (state.getFaceCullMode()) {
-                case Off:
-                    break;
-                case Back:
-                    gl.glCullFace(GL.GL_BACK);
-                    break;
-                case Front:
-                    gl.glCullFace(GL.GL_FRONT);
-                    break;
-                case FrontAndBack:
-                    gl.glCullFace(GL.GL_FRONT_AND_BACK);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unrecognized face cull mode: "
-                            + state.getFaceCullMode());
+            
+            Map<FaceCullMode, Integer> hmap = new HashMap<FaceCullMode, Integer>();
+            hmap.put(FaceCullMode.Back, GL.GL_BACK);
+            hmap.put(FaceCullMode.Front, GL.GL_FRONT);
+            hmap.put(FaceCullMode.FrontAndBack, GL.GL_FRONT_AND_BACK);
+            
+            if(hmap.containsKey(state.getFaceCullMode())) {
+            	gl.glCullFace(hmap.get(state.getFaceCullMode()));            	       	
+            } else if(state.getFaceCullMode() != FaceCullMode.Off) { 
+            	throw new UnsupportedOperationException("Unrecognized face cull mode: "
+                        + state.getFaceCullMode());
             }
-
             context.cullMode = state.getFaceCullMode();
         }
 
@@ -739,45 +735,39 @@ public final class GLRenderer implements Renderer {
                 if (context.blendMode == RenderState.BlendMode.Off) {
                     gl.glEnable(GL.GL_BLEND);
                 }
-                switch (state.getBlendMode()) {
-                    case Off:
-                        break;
-                    case Additive:
-                        gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE);
-                        break;
-                    case AlphaAdditive:
-                        gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE);
-                        break;
-                    case Alpha:
-                        gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-                        break;
-                    case PremultAlpha:
-                        gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
-                        break;
-                    case Modulate:
-                        gl.glBlendFunc(GL.GL_DST_COLOR, GL.GL_ZERO);
-                        break;
-                    case ModulateX2:
-                        gl.glBlendFunc(GL.GL_DST_COLOR, GL.GL_SRC_COLOR);
-                        break;
-                    case Color:
-                    case Screen:
-                        gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_COLOR);
-                        break;
-                    case Exclusion:
-                        gl.glBlendFunc(GL.GL_ONE_MINUS_DST_COLOR, GL.GL_ONE_MINUS_SRC_COLOR);
-                        break;
-                    case Custom:
-                        gl.glBlendFuncSeparate(
-                            convertBlendFunc(state.getCustomSfactorRGB()),
-                            convertBlendFunc(state.getCustomDfactorRGB()),
-                            convertBlendFunc(state.getCustomSfactorAlpha()),
-                            convertBlendFunc(state.getCustomDfactorAlpha()));
-                        break;
-                    default:
-                        throw new UnsupportedOperationException("Unrecognized blend mode: "
-                                + state.getBlendMode());
+                
+                boolean foundBlend = false;
+                Map<RenderState.BlendMode, RenderTestCL> bmap = new HashMap<RenderState.BlendMode, RenderTestCL>();
+                bmap.put(RenderState.BlendMode.Additive, new RenderTestCL(GL.GL_ONE, GL.GL_ONE));
+                bmap.put(RenderState.BlendMode.AlphaAdditive, new RenderTestCL(GL.GL_SRC_ALPHA, GL.GL_ONE));
+                bmap.put(RenderState.BlendMode.Alpha, new RenderTestCL(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA));
+                bmap.put(RenderState.BlendMode.PremultAlpha, new RenderTestCL(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA));
+                bmap.put(RenderState.BlendMode.Modulate, new RenderTestCL(GL.GL_DST_COLOR, GL.GL_ZERO));
+                bmap.put(RenderState.BlendMode.ModulateX2, new RenderTestCL(GL.GL_DST_COLOR, GL.GL_SRC_COLOR));
+                bmap.put(RenderState.BlendMode.Color, new RenderTestCL(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_COLOR));
+                bmap.put(RenderState.BlendMode.Screen, new RenderTestCL(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_COLOR));
+                bmap.put(RenderState.BlendMode.Exclusion, new RenderTestCL(GL.GL_ONE_MINUS_DST_COLOR, GL.GL_ONE_MINUS_SRC_COLOR));
+                
+                
+                if(bmap.containsKey(state.getBlendMode())) {
+                	foundBlend = true;
+                	gl.glBlendFunc(bmap.get(state.getBlendMode()).getA(), bmap.get(state.getBlendMode()).getB());
                 }
+                
+                if(state.getBlendMode() == RenderState.BlendMode.Custom) {
+                	foundBlend = true;
+                	 gl.glBlendFuncSeparate(
+                             convertBlendFunc(state.getCustomSfactorRGB()),
+                             convertBlendFunc(state.getCustomDfactorRGB()),
+                             convertBlendFunc(state.getCustomSfactorAlpha()),
+                             convertBlendFunc(state.getCustomDfactorAlpha()));
+                } 
+                
+                if(state.getBlendMode() != RenderState.BlendMode.Off && !foundBlend) {
+                	throw new UnsupportedOperationException("Unrecognized blend mode: "
+                            + state.getBlendMode());
+                }                
+               
                 
                 if (state.getBlendEquation() != context.blendEquation || state.getBlendEquationAlpha() != context.blendEquationAlpha) {
                     int colorMode = convertBlendEquation(state.getBlendEquation());

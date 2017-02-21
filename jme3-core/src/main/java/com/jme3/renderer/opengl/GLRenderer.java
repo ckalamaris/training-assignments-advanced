@@ -786,24 +786,9 @@ public final class GLRenderer implements Renderer {
             context.blendMode = state.getBlendMode();
         }
 
-        if (context.stencilTest != state.isStencilTest()
-                || context.frontStencilStencilFailOperation != state.getFrontStencilStencilFailOperation()
-                || context.frontStencilDepthFailOperation != state.getFrontStencilDepthFailOperation()
-                || context.frontStencilDepthPassOperation != state.getFrontStencilDepthPassOperation()
-                || context.backStencilStencilFailOperation != state.getBackStencilStencilFailOperation()
-                || context.backStencilDepthFailOperation != state.getBackStencilDepthFailOperation()
-                || context.backStencilDepthPassOperation != state.getBackStencilDepthPassOperation()
-                || context.frontStencilFunction != state.getFrontStencilFunction()
-                || context.backStencilFunction != state.getBackStencilFunction()) {
+        if(!compareRenderContextWithState(context, state)) {
 
-            context.frontStencilStencilFailOperation = state.getFrontStencilStencilFailOperation();   //terrible looking, I know
-            context.frontStencilDepthFailOperation = state.getFrontStencilDepthFailOperation();
-            context.frontStencilDepthPassOperation = state.getFrontStencilDepthPassOperation();
-            context.backStencilStencilFailOperation = state.getBackStencilStencilFailOperation();
-            context.backStencilDepthFailOperation = state.getBackStencilDepthFailOperation();
-            context.backStencilDepthPassOperation = state.getBackStencilDepthPassOperation();
-            context.frontStencilFunction = state.getFrontStencilFunction();
-            context.backStencilFunction = state.getBackStencilFunction();
+            setContextFromState(state);
 
             if (state.isStencilTest()) {
                 gl.glEnable(GL.GL_STENCIL_TEST);
@@ -830,6 +815,31 @@ public final class GLRenderer implements Renderer {
             context.lineWidth = state.getLineWidth();
         }
     }
+
+	private void setContextFromState(RenderState state) {
+		context.frontStencilStencilFailOperation = state.getFrontStencilStencilFailOperation();   //terrible looking, I know
+		context.frontStencilDepthFailOperation = state.getFrontStencilDepthFailOperation();
+		context.frontStencilDepthPassOperation = state.getFrontStencilDepthPassOperation();
+		context.backStencilStencilFailOperation = state.getBackStencilStencilFailOperation();
+		context.backStencilDepthFailOperation = state.getBackStencilDepthFailOperation();
+		context.backStencilDepthPassOperation = state.getBackStencilDepthPassOperation();
+		context.frontStencilFunction = state.getFrontStencilFunction();
+		context.backStencilFunction = state.getBackStencilFunction();
+	}
+    
+    
+    private boolean compareRenderContextWithState(RenderContext context, RenderState state) {
+    	return context.stencilTest == state.isStencilTest()
+                && context.frontStencilStencilFailOperation == state.getFrontStencilStencilFailOperation()
+                && context.frontStencilDepthFailOperation == state.getFrontStencilDepthFailOperation()
+                && context.frontStencilDepthPassOperation == state.getFrontStencilDepthPassOperation()
+                && context.backStencilStencilFailOperation == state.getBackStencilStencilFailOperation()
+                && context.backStencilDepthFailOperation == state.getBackStencilDepthFailOperation()
+                && context.backStencilDepthPassOperation == state.getBackStencilDepthPassOperation()
+                && context.frontStencilFunction == state.getFrontStencilFunction()
+                && context.backStencilFunction == state.getBackStencilFunction();
+    }
+    
 
     private int convertBlendEquation(RenderState.BlendEquation blendEquation) {
         switch (blendEquation) {

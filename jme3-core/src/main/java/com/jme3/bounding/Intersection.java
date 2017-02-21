@@ -159,34 +159,23 @@ public final class Intersection {
 
         
         AxisTest axis = new AxisTest();
-        boolean result = axis.calculateAxisTestX(p0, p2, tmp0, tmp2, e0, fey, fez, extent, vars);
+        boolean result = axis.calculateAxisTestE0X(p0, p2, tmp0, tmp2, e0, fey, fez, extent, vars);
         if(!result) {
         	return false;
         }
 
 
-        //   AXISTEST_Y02(e0[Z], e0[X], fez, fex);
-        p0 = -e0.z * tmp0.x + e0.x * tmp0.z;
-        p2 = -e0.z * tmp2.x + e0.x * tmp2.z;
-        min = min(p0, p2);
-        max = max(p0, p2);
-        rad = fez * extent.x + fex * extent.z;
-        if (min > rad || max < -rad) {
-            vars.release();
-            return false;
+        result = axis.calculateAxisTestE0Z(p0, p2, tmp0, tmp2, e0, fey, fez, extent, vars);
+        if(!result) {
+        	return false;
+        }
+        
+        result = axis.calculateAxisTestE0Y(p0, p2, tmp0, tmp2, e0, fey, fez, extent, vars);
+        if(!result) {
+        	return false;
         }
 
-        // AXISTEST_Z12(e0[Y], e0[X], fey, fex);
-        p1 = e0.y * tmp1.x - e0.x * tmp1.y;
-        p2 = e0.y * tmp2.x - e0.x * tmp2.y;
-        min = min(p1, p2);
-        max = max(p1, p2);
-        rad = fey * extent.x + fex * extent.y;
-        if (min > rad || max < -rad) {
-            vars.release();
-            return false;
-        }
-
+       
         fex = FastMath.abs(e1.x);
         fey = FastMath.abs(e1.y);
         fez = FastMath.abs(e1.z);

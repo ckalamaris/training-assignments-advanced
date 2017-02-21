@@ -125,16 +125,7 @@ public final class Intersection {
 //            return false;
 //    }
     public static boolean intersect(BoundingBox bbox, Vector3f v1, Vector3f v2, Vector3f v3) {
-        //  use separating axis theorem to test overlap between triangle and box
-        //  need to test for overlap in these directions:
-        //  1) the {x,y,z}-directions (actually, since we use the AABB of the triangle
-        //     we do not even need to test these)
-        //  2) normal of the triangle
-        //  3) crossproduct(edge from tri, {x,y,z}-directin)
-        //       this gives 3x3=9 more tests
-
         TempVars vars = TempVars.get();
-
 
         Vector3f tmp0 = vars.vect1,
                 tmp1 = vars.vect2,
@@ -146,9 +137,6 @@ public final class Intersection {
 
         Vector3f center = bbox.getCenter();
         Vector3f extent = bbox.getExtent(null);
-
-//   float min,max,p0,p1,p2,rad,fex,fey,fez;
-//   float normal[3]
 
         // This is the fastest branch on Sun
         // move everything so that the boxcenter is in (0,0,0)
@@ -168,8 +156,6 @@ public final class Intersection {
         float fex = FastMath.abs(e0.x);
         float fey = FastMath.abs(e0.y);
         float fez = FastMath.abs(e0.z);
-
-
 
         //AXISTEST_X01(e0[Z], e0[Y], fez, fey);
         p0 = e0.z * tmp0.y - e0.y * tmp0.z;
@@ -240,7 +226,7 @@ public final class Intersection {
             vars.release();
             return false;
         }
-//
+
         fex = FastMath.abs(e2.x);
         fey = FastMath.abs(e2.y);
         fez = FastMath.abs(e2.z);
@@ -268,15 +254,7 @@ public final class Intersection {
         }
 
 //   AXISTEST_Z12(e2[Y], e2[X], fey, fex);
-        p1 = e2.y * tmp1.x - e2.x * tmp1.y;
-        p2 = e2.y * tmp2.x - e2.x * tmp2.y;
-        min = min(p1, p2);
-        max = max(p1, p2);
-        rad = fey * extent.x + fex * extent.y;
-        if (min > rad || max < -rad) {
-            vars.release();
-            return false;
-        }
+        axistest(vars, tmp1, tmp2, e2, extent, fex, fey);
 
         //  Bullet 1:
         //  first test overlap in the {x,y,z}-directions
@@ -308,11 +286,9 @@ public final class Intersection {
             return false;
         }
 
-//       // Bullet 2:
-//       //  test if the box intersects the plane of the triangle
-//       //  compute plane equation of triangle: normal * x + d = 0
-//        Vector3f normal = new Vector3f();
-//        e0.cross(e1, normal);
+       // Bullet 2:
+       //  test if the box intersects the plane of the triangle
+       //  compute plane equation of triangle: normal * x + d = 0
         Plane p = vars.plane;
 
         p.setPlanePoints(v1, v2, v3);
@@ -320,11 +296,27 @@ public final class Intersection {
             vars.release();
             return false;
         }
-//
-//        if(!planeBoxOverlap(normal,v0,boxhalfsize)) return false;
 
         vars.release();
 
         return true;   /* box and triangle overlaps */
     }
+
+	private static void axistest(TempVars vars, Vector3f tmp1, Vector3f tmp2, Vector3f e2, Vector3f extent, float fex,
+			float fey) {
+		float min;
+		float max;
+		float p1;
+		float p2;
+		float rad;
+		p1 = e2.y * tmp1.x - e2.x * tmp1.y;
+        p2 = e2.y * tmp2.x - e2.x * tmp2.y;
+        min = min(p1, p2);
+        max = max(p1, p2);
+        rad = fey * extent.x + fex * extent.y;
+        if (min > rad || max < -rad) {
+            vars.release();
+            return false;
+        }
+	}
 }

@@ -93,7 +93,7 @@ public class AnimationFactory {
             rotation.set(rot);
             float[] a = new float[3];
             rotation.toAngles(a);
-            eulerAngles.set(a[0], a[1], a[2]);
+            eulerAngles.set(a[0], a[1], a[2]);    
         }
 
         void set(float x, float y, float z) {

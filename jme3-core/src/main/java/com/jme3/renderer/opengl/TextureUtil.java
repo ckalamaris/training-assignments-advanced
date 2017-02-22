@@ -130,104 +130,104 @@ final class TextureUtil {
         }
     }
     
-    private void uploadTextureLevel(GLImageFormat format, int target, int level, int slice, int sliceCount, int width, int height, int depth, int samples, ByteBuffer data) {
-        if (format.compressed && data != null) {
-            if (target == GL2.GL_TEXTURE_3D) {
+    private void uploadTextureLevel(TextureUtilTestLevel test) {
+        if (test.getFormat().compressed && test.getData() != null) {
+            if (test.getValues().getData().getTarget() == GL2.GL_TEXTURE_3D) {
                 // For 3D textures, we upload the entire mipmap level.
-                gl2.glCompressedTexImage3D(target,
-                                           level,
-                                           format.internalFormat,
-                                           width,
-                                           height,
-                                           depth,
+                gl2.glCompressedTexImage3D(test.getValues().getData().getTarget(),
+                                           test.getValues().getData().getLevel(),
+                                           test.getFormat().internalFormat,
+                                           test.getValues().getDimensions().getWidth(),
+                                           test.getValues().getDimensions().getHeight(),
+                                           test.getValues().getDimensions().getDepth(),
                                            0,
-                                           data);
-            } else if (target == GLExt.GL_TEXTURE_2D_ARRAY_EXT) {
+                                           test.getData());
+            } else if (test.getValues().getData().getTarget() == GLExt.GL_TEXTURE_2D_ARRAY_EXT) {
                 // For texture arrays, only upload 1 slice at a time.
                 // zoffset specifies slice index, and depth is 1 to indicate
                 // a single texture in the array.
-                gl2.glCompressedTexSubImage3D(target,
-                                              level,
+                gl2.glCompressedTexSubImage3D(test.getValues().getData().getTarget(),
+                                              test.getValues().getData().getLevel(),
                                               0,
                                               0,
-                                              slice,
-                                              width,
-                                              height,
+                                              test.getValues().getData().getSlice(),
+                                              test.getValues().getDimensions().getWidth(),
+                                              test.getValues().getDimensions().getHeight(),
                                               1,
-                                              format.internalFormat,
-                                              data);
+                                              test.getFormat().internalFormat,
+                                              test.getData());
             } else {
                 // Cubemaps also use 2D upload.
-                gl2.glCompressedTexImage2D(target,
-                                           level,
-                                           format.internalFormat,
-                                           width,
-                                           height,
+                gl2.glCompressedTexImage2D(test.getValues().getData().getTarget(),
+                                           test.getValues().getData().getLevel(),
+                                           test.getFormat().internalFormat,
+                                           test.getValues().getDimensions().getWidth(),
+                                           test.getValues().getDimensions().getHeight(),
                                            0,
-                                           data);
+                                           test.getData());
             }
         } else {
             // (Non-compressed OR allocating texture storage for FBO)
-            if (target == GL2.GL_TEXTURE_3D) {
-                gl2.glTexImage3D(target,
-                                 level,
-                                 format.internalFormat,
-                                 width,
-                                 height,
-                                 depth,
+            if (test.getValues().getData().getTarget() == GL2.GL_TEXTURE_3D) {
+                gl2.glTexImage3D(test.getValues().getData().getTarget(),
+                                 test.getValues().getData().getLevel(),
+                                 test.getFormat().internalFormat,
+                                 test.getValues().getDimensions().getWidth(),
+                                 test.getValues().getDimensions().getHeight(),
+                                 test.getValues().getDimensions().getDepth(),
                                  0,
-                                 format.format,
-                                 format.dataType,
-                                 data);
-            } else if (target == GLExt.GL_TEXTURE_2D_ARRAY_EXT) {
-                if (slice == -1) {
+                                 test.getFormat().format,
+                                 test.getFormat().dataType,
+                                 test.getData());
+            } else if (test.getValues().getData().getTarget() == GLExt.GL_TEXTURE_2D_ARRAY_EXT) {
+                if (test.getValues().getData().getSlice() == -1) {
                     // Allocate texture storage (data is NULL)
-                    gl2.glTexImage3D(target,
-                                     level,
-                                     format.internalFormat,
-                                     width,
-                                     height,
-                                     sliceCount, //# of slices
+                    gl2.glTexImage3D(test.getValues().getData().getTarget(),
+                                     test.getValues().getData().getLevel(),
+                                     test.getFormat().internalFormat,
+                                     test.getValues().getDimensions().getWidth(),
+                                     test.getValues().getDimensions().getHeight(),
+                                     test.getValues().getData().getSliceCount(), //# of slices
                                      0,
-                                     format.format,
-                                     format.dataType,
-                                     data);
+                                     test.getFormat().format,
+                                     test.getFormat().dataType,
+                                     test.getData());
                 } else {
                     // For texture arrays, only upload 1 slice at a time.
                     // zoffset specifies slice index, and depth is 1 to indicate
                     // a single texture in the array.
-                    gl2.glTexSubImage3D(target,
-                                        level,          // level
+                    gl2.glTexSubImage3D(test.getValues().getData().getTarget(),
+                                        test.getValues().getData().getLevel(),          // level
                                         0,              // xoffset
                                         0,              // yoffset
-                                        slice,          // zoffset
-                                        width,          // width
-                                        height,         // height
+                                        test.getValues().getData().getSlice(),          // zoffset
+                                        test.getValues().getDimensions().getWidth(),          // width
+                                        test.getValues().getDimensions().getHeight(),         // height
                                         1,              // depth
-                                        format.format,
-                                        format.dataType,
-                                        data);
+                                        test.getFormat().format,
+                                        test.getFormat().dataType,
+                                        test.getData());
                 }
             } else {
                 // 2D multisampled image.
-                if (samples > 1) {
-                    glext.glTexImage2DMultisample(target,
-                                                  samples,
-                                                  format.internalFormat,
-                                                  width,
-                                                  height,
+                if (test.getValues().getDimensions().getSamples() > 1) {
+                    glext.glTexImage2DMultisample(test.getValues().getData().getTarget(),
+                                                  test.getValues().getDimensions().getSamples(),
+                                                  test.getFormat().internalFormat,
+                                                  test.getValues().getDimensions().getWidth(),
+                                                  test.getValues().getDimensions().getHeight(),
                                                   true);
                 } else {
                     // Regular 2D image
-                    gl.glTexImage2D(target,
-                                    level,
-                                    format.internalFormat,
-                                    width,
-                                    height,
+                    gl.glTexImage2D(test.getValues().getData().getTarget(),
+                                    test.getValues().getData().getLevel(),
+                                    test.getFormat().internalFormat,
+                                    test.getValues().getDimensions().getWidth(),
+                                    test.getValues().getDimensions().getHeight(),
                                     0,
-                                    format.format,
-                                    format.dataType,
-                                    data);
+                                    test.getFormat().format,
+                                    test.getFormat().dataType,
+                                    test.getData());
                 }
             }
         }
@@ -284,8 +284,13 @@ final class TextureUtil {
                 data.position(pos);
                 data.limit(pos + mipSizes[i]);
             }
-
-            uploadTextureLevel(oglFormat, target, i, index, sliceCount, mipWidth, mipHeight, mipDepth, samples, data);
+            
+            
+            TextureUtilTestValuesData vdata = new TextureUtilTestValuesData(target, i, index, sliceCount);
+            TextureUtilTestValuesDimensions dimensions = new TextureUtilTestValuesDimensions(mipWidth, mipHeight, mipDepth, samples);
+            TextureUtilTestValues values = new TextureUtilTestValues(vdata, dimensions);
+            TextureUtilTestLevel level = new TextureUtilTestLevel(oglFormat, values, data);
+            uploadTextureLevel(level);
 
             pos += mipSizes[i];
         }

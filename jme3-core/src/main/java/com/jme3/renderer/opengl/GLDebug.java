@@ -4,7 +4,12 @@ import com.jme3.renderer.RendererException;
 
 public abstract class GLDebug {
 
-    protected GL gl;
+	protected GL gl;
+	protected GLChild1 glChild1;
+    protected GLChild2 glChild2;
+    protected GLChild3 glChild3;
+    protected GLChild4 glChild4;
+    protected GLChild5 glChild5;
     
     protected String decodeError(int err) {
         String errMsg;
@@ -41,7 +46,7 @@ public abstract class GLDebug {
     }
 
     protected void checkError() {
-        int err = gl.glGetError();
+        int err = glChild3.glGetError();
         if (err != 0) {
             throw new RendererException("An OpenGL error occurred - " + decodeError(err));
         }

@@ -113,7 +113,7 @@ public final class GLRenderer implements Renderer {
     private boolean linearizeSrgbImages;
     private HashSet<String> extensions;
 
-    private final GL gl;
+    private final GLRoute gl;
     private final GL2 gl2;
     private final GL3 gl3;
     private final GL4 gl4;
@@ -122,7 +122,7 @@ public final class GLRenderer implements Renderer {
     private final TextureUtil texUtil;
 
     public GLRenderer(GL gl, GLExt glext, GLFbo glfbo) {
-        this.gl = gl;
+        this.gl = (GLRoute) gl;
         this.gl2 = gl instanceof GL2 ? (GL2)gl : null;
         this.gl3 = gl instanceof GL3 ? (GL3)gl : null;
         this.gl4 = gl instanceof GL4 ? (GL4)gl : null;
